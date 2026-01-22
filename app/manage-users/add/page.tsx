@@ -9,7 +9,7 @@ import levels from "@/constants/level";
 
 // Define Zod Schema
 const userSchema = z.object({
-    fีull_name: z.string().min(1, "First Name is required"),
+    full_name: z.string().min(1, "Full name is required"),
     email: z.string().min(1, "Email is required").email("Invalid email address"),
     phone_number: z.string().min(1, "Phone number is required"),
     role: z.string().min(1, "Role is required"),
@@ -80,16 +80,16 @@ export default function ManageUsersPage() {
             <div className="space-y-6">
                 <h1 className="text-xl font-bold">Add User</h1>
                 <div className="flex flex-col gap-6 bg-white shadow-lg px-6 py-12 rounded-xl w-full lg:w-1/2">
-                    {/* First Name */}
+                    {/* Full Name */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="full_name" className="text-xs font-semibold text-gray-900">First Name<span className="text-red-600">*</span></label>
+                        <label htmlFor="full_name" className="text-xs font-semibold text-gray-900">Full Name<span className="text-red-600">*</span></label>
                         <input
                             type="text"
                             name="full_name"
                             value={formData.full_name}
                             onChange={handleChange}
-                            placeholder="Enter First Name"
-                            className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.first_name ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
+                            placeholder="Enter Full Name"
+                            className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.full_name ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                         />
                         {errors.full_name && <p className="text-xs text-red-500">{errors.full_name}</p>}
                     </div>

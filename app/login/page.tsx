@@ -2,7 +2,10 @@
 import { Eye, EyeClosed } from 'lucide-react';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { login } from "@/lib/api";
 
 // Zod schema for login validation
 const loginSchema = z.object({
@@ -15,66 +18,37 @@ const loginSchema = z.object({
         .min(1, "Password is required"),
 });
 
-type LoginFormErrors = {
-    email?: string;
-    password?: string;
-};
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
     const router = useRouter();
-    const [formData, setFormData] = useState({
-        email: "",
-        password: "",
-    });
-    const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
-    const [fieldErrors, setFieldErrors] = useState<LoginFormErrors>({});
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<LoginFormData>({
+        resolver: zodResolver(loginSchema),
+    });
+
+    const onSubmit = async (data: LoginFormData) => {
         setError("");
-        // Clear field error when user starts typing
-        if (fieldErrors[name as keyof LoginFormErrors]) {
-            setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setFieldErrors({});
-        setError("");
-
-        // Validate with Zod
-        const result = loginSchema.safeParse(formData);
-        if (!result.success) {
-            const errors: LoginFormErrors = {};
-            result.error.issues.forEach((issue) => {
-                const field = issue.path[0] as keyof LoginFormErrors;
-                if (!errors[field]) {
-                    errors[field] = issue.message;
-                }
-            });
-            setFieldErrors(errors);
-            return;
-        }
-
-        setIsLoading(true);
 
         try {
-            // TODO: Implement actual login API call
-            console.log("Login attempt:", formData);
+            const result = await login({
+                email: data.email,
+                password: data.password,
+            });
 
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('user', JSON.stringify(result.user));
 
-            // On success, redirect to home
-            router.push("/");
-        } catch (err) {
-            setError("Invalid email or password. Please try again.");
-        } finally {
-            setIsLoading(false);
+            // เปลี่ยนจาก /dashboard เป็น /
+            router.push("/");  // ← เปลี่ยนตรงนี้
+        } catch (err: any) {
+            setError(err.message || "Invalid email or password. Please try again.");
         }
     };
 
@@ -102,7 +76,7 @@ export default function LoginPage() {
                     )}
 
                     {/* Login Form */}
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                         {/* Email Input */}
                         <div className="space-y-2">
                             <label
@@ -114,16 +88,19 @@ export default function LoginPage() {
                             <div className="relative">
                                 <input
                                     id="email"
-                                    name="email"
                                     type="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
+                                    {...register("email")}
                                     placeholder="you@example.com"
-                                    className={`text-xs w-full px-4 py-3 bg-white/5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${fieldErrors.email ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
+                                    className={`text-xs w-full px-4 py-3 bg-white/5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.email
+                                        ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50'
+                                        : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'
+                                        }`}
                                 />
                             </div>
-                            {fieldErrors.email && (
-                                <p className="text-xs text-red-400 mt-1">{fieldErrors.email}</p>
+                            {errors.email && (
+                                <p className="text-xs text-red-400 mt-1">
+                                    {errors.email.message}
+                                </p>
                             )}
                         </div>
 
@@ -138,17 +115,18 @@ export default function LoginPage() {
                             <div className="relative">
                                 <input
                                     id="password"
-                                    name="password"
                                     type={showPassword ? "text" : "password"}
-                                    value={formData.password}
-                                    onChange={handleChange}
+                                    {...register("password")}
                                     placeholder="••••••••"
-                                    className={`text-xs w-full px-4 py-3 bg-white/5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${fieldErrors.password ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
+                                    className={`text-xs w-full px-4 py-3 bg-white/5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.password
+                                        ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50'
+                                        : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'
+                                        }`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500  transition-colors"
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 transition-colors"
                                 >
                                     {showPassword ? (
                                         <EyeClosed className='w-4 h-4' stroke="currentColor" />
@@ -157,26 +135,26 @@ export default function LoginPage() {
                                     )}
                                 </button>
                             </div>
-                            {fieldErrors.password && (
-                                <p className="text-xs text-red-400 mt-1">{fieldErrors.password}</p>
+                            {errors.password && (
+                                <p className="text-xs text-red-400 mt-1">
+                                    {errors.password.message}
+                                </p>
                             )}
                         </div>
 
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isSubmitting}
                             className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl shadow-lg shadow-gray-500/30 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            {isLoading ? (
+                            {isSubmitting ? (
                                 <span className="text-sm">Signing in...</span>
                             ) : (
                                 <span className="text-sm">Sign In</span>
                             )}
                         </button>
                     </form>
-
-
                 </div>
             </div>
         </div>

@@ -35,8 +35,8 @@ The application requires environment variables defined in `.env` (see `.env.exam
 
 The application uses Next.js App Router with the following route hierarchy:
 
-- `/` - Landing page (home)
-- `/login` - Authentication page with Zod validation
+- `/` - Home page with user dashboard (uses Layout component)
+- `/login` - Authentication page with Zod validation (standalone, no layout)
 - `/manage-users` - User management with add/delete operations
   - `/manage-users/add` - Add new user
 - `/manage-projects` - Project management with CRUD operations
@@ -44,7 +44,7 @@ The application uses Next.js App Router with the following route hierarchy:
   - `/manage-projects/edit/[id]` - Edit existing project (dynamic route)
 - `/manage-tasks` - Task management interface
 
-All management pages use a shared layout component with sidebar navigation.
+All pages except `/login` use the shared Layout component with sidebar navigation.
 
 ### Component Architecture
 

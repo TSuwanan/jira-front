@@ -71,7 +71,7 @@ export default function AddProjectPage() {
             <div className="space-y-6">
                 <h1 className="text-xl font-bold">Add Project</h1>
                 <div className="flex flex-col gap-6 bg-white shadow-lg px-6 py-12 rounded-xl w-full lg:w-1/2">
-                    {/* First Name */}
+                    {/* Project Name */}
                     <div className="flex flex-col gap-2">
                         <label htmlFor="project_name" className="text-xs font-semibold text-gray-900">Project Name <span className="text-red-600">*</span></label>
                         <input
