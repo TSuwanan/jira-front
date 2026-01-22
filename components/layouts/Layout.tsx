@@ -5,8 +5,10 @@ import {
     ChevronRight,
     Banknote,
     Globe,
-    Shield,
-    UserRound,
+    FolderKanban,
+    ClipboardList,
+    UsersRound,
+
 } from "lucide-react";
 import Header from "./Header";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,7 +19,7 @@ import { ReactNode, useState } from "react";
 interface NavigationItem {
     id: string;
     label: string;
-    icon: typeof UserRound;
+    icon: typeof UsersRound;
     route?: string;
 }
 
@@ -36,19 +38,19 @@ const createDefaultNavigationItems = (): NavigationItem[] => [
     {
         id: "users",
         label: "Manage Users",
-        icon: Shield,
+        icon: UsersRound,
         route: "/manage-users",
     },
     {
         id: "projects",
         label: "Manage Projects",
-        icon: Banknote,
+        icon: FolderKanban,
         route: "/manage-projects",
     },
     {
         id: "manage-tasks",
         label: "Manage Tasks",
-        icon: Globe,
+        icon: ClipboardList,
         route: "/manage-tasks",
     }
 ];
@@ -107,16 +109,15 @@ export default function Layout({
             />
 
             <div
-                className={`max-w-full mx-auto py-0 px-0 lg:px-4 xl:px-6 pb-8 ${showBackButton ? "pt-16" : ""
-                    } lg:pt-18`}
+                className={`max-w-full mx-auto py-0 pb-8 lg:pt-16`}
             >
-                <div className="flex flex-col lg:flex-row lg:gap-12">
+                <div className="flex flex-col lg:flex-row lg:gap-6">
                     {/* Sidebar Navigation - Hide on tablet/mobile when hideMenuOnMobile is true */}
-                    <div className={`hidden lg:block lg:w-1/5 `}>
-                        <nav className="pt-4 pb-0 pl-0">
+                    <div className={`hidden lg:block fixed lg:w-1/5 pl-4 pr-4 xl:pr-8 shadow-xl h-[100vh] `}>
+                        <nav className="pt-8 pb-0 pl-0">
                             {finalNavigationItems.map((item) => {
                                 const Icon = item.icon;
-                                const isActive = currentSelectedSection === item.id;
+                                const isActive = item.route ? pathname === item.route : currentSelectedSection === item.id;
 
                                 return (
                                     <button
@@ -130,9 +131,9 @@ export default function Layout({
                                     >
                                         <div className="flex items-center">
                                             <Icon className="w-6 h-6 mr-3" strokeWidth="1.5" />
-                                            <span>{item.label}</span>
+                                            <span className="text-sm xl:text-base">{item.label}</span>
                                         </div>
-                                        {/* {isActive && <ChevronRight className="w-4 h-4" />} */}
+                                        {isActive && <ChevronRight className="w-4 h-4" />}
                                     </button>
                                 );
                             })}
@@ -140,8 +141,8 @@ export default function Layout({
                     </div>
 
                     {/* Main Content */}
-                    <div className="w-full lg:w-4/5">
-                        <div className="px-4 py-0 lg:py-6">{children}</div>
+                    <div className="w-full absolute right-0 lg:w-4/5 h-[100vh]">
+                        <div className="px-4 pt-20 md:pt-24 lg:pt-8 ">{children}</div>
                     </div>
                 </div>
             </div>
