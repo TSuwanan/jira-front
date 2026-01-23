@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/layouts/Layout";
+import { clearAuth, getToken } from "@/lib/api";
 
 interface User {
   id: string;
@@ -19,10 +20,11 @@ export default function HomePage() {
 
   useEffect(() => {
     // เช็ค token
-    const token = localStorage.getItem("token");
+    const token = getToken();
     const userData = localStorage.getItem("user");
 
     if (!token || !userData) {
+      clearAuth();
       router.push("/login");
       return;
     }

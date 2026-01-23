@@ -2,16 +2,16 @@ export default [
     {
         "id": "1",
         "name": "Senior",
-        "code": "SE"
+        "code": "S"
     },
     {
         "id": "2",
         "name": "Middle",
-        "code": "MD"
+        "code": "M"
     },
     {
         "id": "3",
         "name": "Junior",
-        "code": "JR"
+        "code": "J"
     }
 ]
