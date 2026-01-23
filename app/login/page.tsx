@@ -81,7 +81,7 @@ export default function LoginPage() {
                         <div className="space-y-2">
                             <label
                                 htmlFor="email"
-                                className="block text-xs font-medium"
+                                className="block text-[10px] font-bold uppercase tracking-widest"
                             >
                                 Email Address
                             </label>
@@ -98,7 +98,7 @@ export default function LoginPage() {
                                 />
                             </div>
                             {errors.email && (
-                                <p className="text-xs text-red-400 mt-1">
+                                <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">
                                     {errors.email.message}
                                 </p>
                             )}
@@ -108,7 +108,7 @@ export default function LoginPage() {
                         <div className="space-y-2">
                             <label
                                 htmlFor="password"
-                                className="block text-xs font-medium"
+                                className="block text-[10px] font-bold uppercase tracking-widest"
                             >
                                 Password
                             </label>
@@ -136,7 +136,7 @@ export default function LoginPage() {
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="text-xs text-red-400 mt-1">
+                                <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">
                                     {errors.password.message}
                                 </p>
                             )}

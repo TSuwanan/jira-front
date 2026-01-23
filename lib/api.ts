@@ -371,6 +371,27 @@ export async function editProject(token: string, id: string, data: CreateProject
   return result.data || result.project || result;
 }
 
+// Delete project
+export async function deleteProject(token: string, id: string | number): Promise<void> {
+  const response = await fetchWithAuth(`${API_URL}/api/projects/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || error.error || 'Failed to delete project');
+    } catch {
+      throw new Error(text || 'Failed to delete project');
+    }
+  }
+}
+
 // Get project members
 export async function getProjectMembers(token: string, projectId: string): Promise<User[]> {
   const response = await fetchWithAuth(`${API_URL}/api/projects/${projectId}/members`, {
@@ -402,6 +423,7 @@ export interface Task {
   assignee_id?: string;
   assignee_name?: string;
   created_by?: string;
+  submission_comment?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -495,14 +517,14 @@ export async function getTask(token: string, id: string): Promise<Task> {
 }
 
 // Update task status
-export async function updateTaskStatus(token: string, taskId: string, status: string): Promise<Task> {
+export async function updateTaskStatus(token: string, taskId: string, status: string, comment?: string): Promise<Task> {
   const response = await fetchWithAuth(`${API_URL}/api/tasks/${taskId}/status`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, comment }),
   });
 
   if (!response.ok) {
@@ -537,4 +559,29 @@ export async function deleteTask(token: string, id: string): Promise<void> {
       throw new Error(text || 'Failed to delete task');
     }
   }
+}
+
+// Edit task
+export async function editTask(token: string, id: string, data: Partial<CreateTaskData>): Promise<Task> {
+  const response = await fetchWithAuth(`${API_URL}/api/tasks/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || error.error || 'Failed to edit task');
+    } catch {
+      throw new Error(text || 'Failed to edit task');
+    }
+  }
+
+  const result = await response.json();
+  return result.data || result.task || result;
 }

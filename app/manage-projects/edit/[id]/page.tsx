@@ -133,7 +133,7 @@ export default function EditProjectPage() {
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 bg-white shadow-lg px-6 py-12 rounded-xl w-full lg:w-1/2">
                     {/* Project Name */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="name" className="text-xs font-semibold text-gray-900">Project Name <span className="text-red-600">*</span></label>
+                        <label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest">Project Name <span className="text-red-600">*</span></label>
                         <input
                             type="text"
                             id="name"
@@ -141,12 +141,12 @@ export default function EditProjectPage() {
                             placeholder="Enter Project Name"
                             className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.name ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                         />
-                        {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+                        {errors.name && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.name.message}</p>}
                     </div>
 
                     {/* Description */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="description" className="text-xs font-semibold text-gray-900">Description</label>
+                        <label htmlFor="description" className="text-[10px] font-bold uppercase tracking-widest">Description</label>
                         <textarea
                             id="description"
                             {...register("description")}
@@ -154,12 +154,12 @@ export default function EditProjectPage() {
                             rows={4}
                             className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.description ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                         />
-                        {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
+                        {errors.description && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.description.message}</p>}
                     </div>
 
                     {/* Members */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-semibold text-gray-900">Project Members <span className="text-red-600">*</span></label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest">Project Members <span className="text-red-600">*</span></label>
                         <div className={`border rounded-lg p-3 max-h-48 overflow-y-auto ${errors.member_ids ? 'border-red-500' : 'border-gray-300'}`}>
                             {loadingUsers ? (
                                 <p className="text-xs text-gray-500">Loading users...</p>
@@ -183,7 +183,7 @@ export default function EditProjectPage() {
                                 </div>
                             )}
                         </div>
-                        {errors.member_ids && <p className="text-xs text-red-500">{errors.member_ids.message}</p>}
+                        {errors.member_ids && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.member_ids.message}</p>}
                         {selectedMemberIds.length > 0 && (
                             <p className="text-xs text-gray-500">{selectedMemberIds.length} member(s) selected</p>
                         )}

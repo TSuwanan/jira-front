@@ -102,7 +102,7 @@ export default function ManageUsersPage() {
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 bg-white shadow-lg px-6 py-12 rounded-xl w-full lg:w-1/2">
                     {/* Full Name */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="full_name" className="text-xs font-semibold text-gray-900">Full Name<span className="text-red-600">*</span></label>
+                        <label htmlFor="full_name" className="text-[10px] font-bold uppercase tracking-widest">Full Name<span className="text-red-600">*</span></label>
                         <input
                             type="text"
                             id="full_name"
@@ -110,12 +110,12 @@ export default function ManageUsersPage() {
                             placeholder="Enter Full Name"
                             className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.full_name ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                         />
-                        {errors.full_name && <p className="text-xs text-red-500">{errors.full_name.message}</p>}
+                        {errors.full_name && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.full_name.message}</p>}
                     </div>
 
                     {/* Email */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="email" className="text-xs font-semibold text-gray-900">Email<span className="text-red-600">*</span></label>
+                        <label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest">Email<span className="text-red-600">*</span></label>
                         <input
                             type="text"
                             id="email"
@@ -123,12 +123,12 @@ export default function ManageUsersPage() {
                             placeholder="Enter Email"
                             className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.email ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                         />
-                        {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                        {errors.email && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.email.message}</p>}
                     </div>
 
                     {/* Phone Number */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="phone_number" className="text-xs font-semibold text-gray-900">Phone Number<span className="text-red-600">*</span></label>
+                        <label htmlFor="phone_number" className="text-[10px] font-bold uppercase tracking-widest">Phone Number<span className="text-red-600">*</span></label>
                         <input
                             type="text"
                             id="phone_number"
@@ -137,12 +137,12 @@ export default function ManageUsersPage() {
                             placeholder="Enter Phone number"
                             className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.phone_number ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                         />
-                        {errors.phone_number && <p className="text-xs text-red-500">{errors.phone_number.message}</p>}
+                        {errors.phone_number && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.phone_number.message}</p>}
                     </div>
 
                     {/* Role */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="role" className="text-xs font-semibold text-gray-900">Role<span className="text-red-600">*</span></label>
+                        <label htmlFor="role" className="text-[10px] font-bold uppercase tracking-widest">Role<span className="text-red-600">*</span></label>
                         <select
                             id="role"
                             {...register("role")}
@@ -156,12 +156,12 @@ export default function ManageUsersPage() {
                                 <option key={role.id} value={role.id}>{role.name}</option>
                             ))}
                         </select>
-                        {errors.role && <p className="text-xs text-red-500">{errors.role.message}</p>}
+                        {errors.role && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.role.message}</p>}
                     </div>
 
                     {/* Position */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="position_code" className="text-xs font-semibold text-gray-900">Position<span className="text-red-600">*</span></label>
+                        <label htmlFor="position_code" className="text-[10px] font-bold uppercase tracking-widest">Position<span className="text-red-600">*</span></label>
                         <select
                             id="position_code"
                             {...register("position_code")}
@@ -172,12 +172,12 @@ export default function ManageUsersPage() {
                                 <option key={pos.id} value={pos.code}>{pos.name}</option>
                             ))}
                         </select>
-                        {errors.position_code && <p className="text-xs text-red-500">{errors.position_code.message}</p>}
+                        {errors.position_code && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.position_code.message}</p>}
                     </div>
 
                     {/* Level */}
                     <div className="flex flex-col gap-2">
-                        <label htmlFor="level_code" className="text-xs font-semibold text-gray-900">Level<span className="text-red-600">*</span></label>
+                        <label htmlFor="level_code" className="text-[10px] font-bold uppercase tracking-widest">Level<span className="text-red-600">*</span></label>
                         <select
                             id="level_code"
                             {...register("level_code")}
@@ -188,7 +188,7 @@ export default function ManageUsersPage() {
                                 <option key={lvl.id} value={lvl.code}>{lvl.name}</option>
                             ))}
                         </select>
-                        {errors.level_code && <p className="text-xs text-red-500">{errors.level_code.message}</p>}
+                        {errors.level_code && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.level_code.message}</p>}
                     </div>
 
                     <div className="flex justify-end gap-2">

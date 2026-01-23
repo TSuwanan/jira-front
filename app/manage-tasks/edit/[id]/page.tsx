@@ -1,13 +1,13 @@
 "use client";
 
 import Layout from "@/components/layouts/Layout";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { addTask, clearAuth, getToken, getProjectMembers, getProjects, User, Project, getUser } from "@/lib/api";
+import { editTask, getTask, clearAuth, getToken, getProjectMembers, getProjects, User, Project, getUser } from "@/lib/api";
 import taskPriorities from "@/constants/task-priority.js";
 
 // Define Zod Schema
@@ -22,18 +22,23 @@ const taskSchema = z.object({
 
 type TaskFormData = z.infer<typeof taskSchema>;
 
-export default function AddTaskPage() {
+export default function EditTaskPage() {
     const router = useRouter();
+    const params = useParams();
+    const taskId = params.id as string;
+
     const [members, setMembers] = useState<User[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
     const [loadingMembers, setLoadingMembers] = useState(false);
-    const [loadingProjects, setLoadingProjects] = useState(true);
+    const [loadingPage, setLoadingPage] = useState(true);
+    const isFirstLoad = useRef(true);
 
     const {
         register,
         handleSubmit,
         watch,
         setValue,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
@@ -49,9 +54,9 @@ export default function AddTaskPage() {
 
     const selectedProjectId = watch("project_id");
 
-    // Fetch projects on mount
+    // Fetch initial data
     useEffect(() => {
-        const fetchProjects = async () => {
+        const fetchData = async () => {
             try {
                 const token = getToken();
                 const user = getUser();
@@ -62,37 +67,65 @@ export default function AddTaskPage() {
                     return;
                 }
 
-                const projectsResult = await getProjects(token, 1, 100);
+                // Fetch task and projects in parallel
+                const [taskData, projectsResult] = await Promise.all([
+                    getTask(token, taskId),
+                    getProjects(token, 1, 100),
+                ]);
+
                 setProjects(projectsResult.data);
+
+                // Fetch members for the task's project
+                if (taskData.project_id) {
+                    const membersResult = await getProjectMembers(token, taskData.project_id);
+                    setMembers(membersResult);
+                }
+
+                // Populate form
+                reset({
+                    title: taskData.title || "",
+                    description: taskData.description || "",
+                    status: taskData.status || "T",
+                    priority: taskData.priority || "",
+                    project_id: taskData.project_id ? taskData.project_id.toString() : "",
+                    assignee_id: taskData.assignee_id ? taskData.assignee_id.toString() : "",
+                });
+
             } catch (err) {
-                console.error("Failed to fetch projects:", err);
+                console.error("Failed to fetch data:", err);
             } finally {
-                setLoadingProjects(false);
+                setLoadingPage(false);
             }
         };
-        fetchProjects();
-    }, [router]);
+        fetchData();
+    }, [router, taskId, reset]);
 
-    // Fetch members when project is selected
+    // Update members when project selection changes manually
     useEffect(() => {
+        if (loadingPage) return;
+
+        // Skip the first run because it's handled by fetchData
+        if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            return;
+        }
+
         const fetchMembers = async () => {
             if (!selectedProjectId) {
                 setMembers([]);
+                setValue("assignee_id", "");
                 return;
             }
 
             try {
                 setLoadingMembers(true);
                 const token = getToken();
-                if (!token) {
-                    clearAuth();
-                    router.push("/login");
-                    return;
-                }
+                if (!token) return;
 
                 const membersResult = await getProjectMembers(token, selectedProjectId);
                 setMembers(membersResult);
-                // Reset assignee when project changes
+
+                // Reset assignee as the project has changed
                 setValue("assignee_id", "");
             } catch (err) {
                 console.error("Failed to fetch project members:", err);
@@ -102,7 +135,7 @@ export default function AddTaskPage() {
             }
         };
         fetchMembers();
-    }, [selectedProjectId, router, setValue]);
+    }, [selectedProjectId, loadingPage, setValue]);
 
     const onSubmit = async (data: TaskFormData) => {
         try {
@@ -112,31 +145,21 @@ export default function AddTaskPage() {
                 router.push("/login");
                 return;
             }
-            // Auto-calculate status based on assignee
-            const payload: any = {
-                ...data,
-                status: data.assignee_id ? "I" : "T"
-            };
 
-            // Remove empty assignee_id
+            const payload: any = { ...data };
             if (!payload.assignee_id) {
                 delete payload.assignee_id;
             }
 
-            await addTask(token, payload);
+            await editTask(token, taskId, payload);
             router.push("/manage-tasks");
         } catch (error) {
-            if (error instanceof Error && error.message === "Unauthorized") {
-                clearAuth();
-                router.push("/login");
-                return;
-            }
-            console.error("Failed to add task:", error);
-            alert(error instanceof Error ? error.message : "Failed to create task");
+            console.error("Failed to edit task:", error);
+            alert(error instanceof Error ? error.message : "Failed to edit task");
         }
     };
 
-    if (loadingProjects) {
+    if (loadingPage) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -147,7 +170,7 @@ export default function AddTaskPage() {
     return (
         <Layout children={
             <div className="space-y-6">
-                <h1 className="text-xl font-bold">Add Task</h1>
+                <h1 className="text-xl font-bold">Edit Task</h1>
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 bg-white shadow-lg px-6 py-12 rounded-xl w-full lg:w-1/2">
 
                     {/* Project */}
@@ -156,12 +179,9 @@ export default function AddTaskPage() {
                         <select
                             id="project_id"
                             {...register("project_id")}
-                            disabled={loadingProjects}
-                            className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.project_id ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.project_id ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                         >
-                            <option value="">
-                                {loadingProjects ? "Loading projects..." : "Select Project"}
-                            </option>
+                            <option value="">Select Project</option>
                             {projects.map((project) => (
                                 <option key={project.id} value={project.id}>
                                     {project.name} ({project.project_code})
@@ -170,6 +190,7 @@ export default function AddTaskPage() {
                         </select>
                         {errors.project_id && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.project_id.message}</p>}
                     </div>
+
                     {/* Title */}
                     <div className="flex flex-col gap-2">
                         <label htmlFor="title" className="text-[10px] font-bold uppercase tracking-widest">Title <span className="text-red-600">*</span></label>
@@ -196,9 +217,8 @@ export default function AddTaskPage() {
                         {errors.description && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.description.message}</p>}
                     </div>
 
-                    {/* Status & Priority Row */}
+                    {/* Status & Priority */}
                     <div className="grid grid-cols-1 gap-4">
-                        {/* Priority */}
                         <div className="flex flex-col gap-2">
                             <label htmlFor="priority" className="text-[10px] font-bold uppercase tracking-widest">Priority <span className="text-red-600">*</span></label>
                             <select
@@ -207,15 +227,13 @@ export default function AddTaskPage() {
                                 className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.priority ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
                             >
                                 <option value="">Select Priority</option>
-                                {taskPriorities.map((priority: { id: string; code: string; name: string }) => (
+                                {taskPriorities.map((priority: any) => (
                                     <option key={priority.id} value={priority.code}>{priority.name}</option>
                                 ))}
                             </select>
                             {errors.priority && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.priority.message}</p>}
                         </div>
                     </div>
-
-
 
                     {/* Assignee */}
                     <div className="flex flex-col gap-2">
@@ -244,12 +262,11 @@ export default function AddTaskPage() {
                         {errors.assignee_id && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.assignee_id.message}</p>}
                     </div>
 
-
                     <div className="flex justify-end gap-2">
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="px-4 py-2 border border-gray-900 hover:bg-gray-800 hover:text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            className="px-4 py-2 border border-gray-900 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                         >
                             Cancel
                         </button>
@@ -262,6 +279,7 @@ export default function AddTaskPage() {
                         </button>
                     </div>
                 </form>
-            </div>} />
+            </div>
+        } />
     );
 }

@@ -4,7 +4,7 @@ import Layout from "@/components/layouts/Layout";
 import { Trash, ChevronLeft, ChevronRight, Edit, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { getProjects, Project, clearAuth, getToken, getUser } from "@/lib/api";
+import { getProjects, deleteProject, Project, clearAuth, getToken, getUser } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatDate } from "@/lib/format";
 
@@ -48,6 +48,26 @@ export default function ManageProjectsPage() {
             setError(err instanceof Error ? err.message : "An error occurred");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (projectId: string | number, projectName: string) => {
+        if (!confirm(`Are you sure you want to delete project "${projectName}"?`)) {
+            return;
+        }
+
+        try {
+            const token = getToken();
+            if (!token) {
+                clearAuth();
+                router.push("/login");
+                return;
+            }
+
+            await deleteProject(token, projectId);
+            fetchProjects(currentPage, debouncedSearch);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to delete project");
         }
     };
 
@@ -141,6 +161,7 @@ export default function ManageProjectsPage() {
                                                     className={`p-2 transition-colors ${(project.task_count ?? 0) > 0 ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-800 cursor-pointer'}`}
                                                     disabled={(project.task_count ?? 0) > 0}
                                                     title={(project.task_count ?? 0) > 0 ? 'Cannot delete project with tasks' : 'Delete project'}
+                                                    onClick={() => handleDelete(project.id, project.name)}
                                                 >
                                                     <Trash className="w-4 h-4 mx-auto" strokeWidth="2" />
                                                 </button>

@@ -6,6 +6,15 @@ import { useState, useEffect } from "react";
 import { getTask, updateTaskStatus, clearAuth, getToken, Task, getUser } from "@/lib/api";
 import { Loader2, CheckCircle2, ChevronLeft, Calendar, User, Briefcase, Tag } from "lucide-react";
 import { formatDate } from "@/lib/format";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const submissionSchema = z.object({
+    comment: z.string().min(1, "Submission Comment is required"),
+});
+
+type SubmissionFormData = z.infer<typeof submissionSchema>;
 
 export default function CompleteTaskPage() {
     const router = useRouter();
@@ -15,7 +24,17 @@ export default function CompleteTaskPage() {
     const [task, setTask] = useState<Task | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<SubmissionFormData>({
+        resolver: zodResolver(submissionSchema),
+        defaultValues: {
+            comment: "",
+        },
+    });
 
     useEffect(() => {
         const fetchTaskData = async () => {
@@ -40,19 +59,19 @@ export default function CompleteTaskPage() {
         fetchTaskData();
     }, [taskId, router]);
 
-    const handleConfirmComplete = async () => {
+    const onSubmit = async (data: SubmissionFormData) => {
         try {
-            setIsSubmitting(true);
             const token = getToken();
-            if (!token) return;
+            if (!token) {
+                alert("No token found");
+                return;
+            }
 
-            await updateTaskStatus(token, taskId, "D"); // Set to Done
+            await updateTaskStatus(token, taskId, "D", data.comment);
             router.push("/manage-tasks");
         } catch (err) {
             console.error("Failed to complete task:", err);
-            alert("Failed to confirm task completion");
-        } finally {
-            setIsSubmitting(false);
+            alert(err instanceof Error ? err.message : "Failed to confirm task completion");
         }
     };
 
@@ -82,19 +101,9 @@ export default function CompleteTaskPage() {
 
     return (
         <Layout>
-            <div className="max-w-2xl mx-auto py-12 px-4 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
-                {/* Back Link */}
-                <button
-                    onClick={() => router.back()}
-                    className="group flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
-                >
-                    <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    Back to Tasks
-                </button>
-
+            <div className="w-full lg:w-2xl px-4 pb-10 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* Header */}
-                <header className="space-y-4 border-b border-gray-100 pb-12">
+                <header className="space-y-8 border-b border-gray-100 pb-4">
                     <div className="flex items-center justify-between">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-wider">
                             <Tag className="w-3 h-3" />
@@ -107,7 +116,7 @@ export default function CompleteTaskPage() {
                             </div>
                         )}
                     </div>
-                    <h1 className="text-4xl font-light text-gray-900 tracking-tight leading-tight">
+                    <h1 className="text-2xl font-light text-gray-900 tracking-tight leading-tight">
                         {task.status === 'D' ? 'Task' : 'Complete'} <span className="font-medium">Deliverables</span>
                     </h1>
                     <p className="text-gray-500 max-w-lg leading-relaxed text-sm">
@@ -118,7 +127,7 @@ export default function CompleteTaskPage() {
                 </header>
 
                 {/* Details Card */}
-                <div className="bg-white border border-gray-100 rounded-3xl p-8 md:p-10 space-y-10 shadow-sm">
+                <div className="bg-white border border-gray-100 rounded-3xl p-8 md:p-10 space-y-12 shadow-sm">
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Task Title</label>
                         <h2 className="text-xl font-medium text-gray-900">{task.title}</h2>
@@ -156,36 +165,52 @@ export default function CompleteTaskPage() {
                 </div>
 
                 {/* Action Section */}
-                <div className="flex flex-col items-center gap-6 pt-8">
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 ">
                     {task.status !== 'D' ? (
                         <>
-                            <button
-                                onClick={handleConfirmComplete}
-                                disabled={isSubmitting}
-                                className="group relative inline-flex items-center justify-center gap-3 px-12 py-4 bg-gray-900 text-white rounded-full font-medium text-sm hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-gray-200"
-                            >
-                                {isSubmitting ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <CheckCircle2 className="w-5 h-5" />
-                                )}
-                                <span>Finalize Delivery</span>
-                            </button>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-                                Confirming will notify the manager and lock the task status.
-                            </p>
+                            <div className="w-full space-y-4">
+                                <label className="text-[10px] font-bold uppercase tracking-widest">Submission Comment <span className="text-red-600">*</span></label>
+                                <textarea
+                                    {...register("comment")}
+                                    placeholder="Add a comment about your work..."
+                                    rows={4}
+                                    className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.comment ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
+                                />
+                                {errors.comment && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.comment.message}</p>}
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => router.back()}
+                                    className="px-4 py-2 border border-gray-900 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-xs font-semibold text-white rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSubmitting ? "Saving..." : "Save"}
+                                </button>
+                            </div>
                         </>
                     ) : (
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-2">
-                                <CheckCircle2 className="w-6 h-6 text-green-600" />
-                            </div>
-                            <p className="text-sm font-medium text-gray-900 uppercase tracking-widest">Submission Confirmed</p>
-                            <p className="text-xs text-gray-400">This record is for viewing purposes only.</p>
+                        <div className="w-full space-y-4">
+                            <label className="text-[10px] font-bold uppercase tracking-widest">Submission Comment <span className="text-red-600">*</span></label>
+                            <textarea
+                                {...register("comment")}
+                                placeholder="Add a comment about your work..."
+                                value={task.submission_comment}
+                                disabled
+                                rows={4}
+                                className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.comment ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
+                            />
+                            {errors.comment && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.comment.message}</p>}
                         </div>
                     )}
-                </div>
-
+                </form>
             </div>
         </Layout>
     );
