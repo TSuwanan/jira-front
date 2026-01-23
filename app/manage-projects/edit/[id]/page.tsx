@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { editProject, getProject, clearAuth, getToken, getUsers, User } from "@/lib/api";
+import { editProject, getProject, clearAuth, getToken, getMembers, User, getUser } from "@/lib/api";
 
 // Define Zod Schema
 const projectSchema = z.object({
@@ -56,19 +56,21 @@ export default function EditProjectPage() {
         const fetchData = async () => {
             try {
                 const token = getToken();
-                if (!token) {
-                    clearAuth();
-                    router.push("/login");
+                const user = getUser();
+
+                if (!token || !user || user.role_id !== 1) {
+                    if (!token) clearAuth();
+                    router.push(token ? "/" : "/login");
                     return;
                 }
 
                 // Fetch users and project data in parallel
                 const [usersResult, projectData] = await Promise.all([
-                    getUsers(token, 1, 100),
+                    getMembers(token),
                     getProject(token, projectId),
                 ]);
 
-                setUsers(usersResult.data);
+                setUsers(usersResult);
 
                 // Set form values from project data
                 reset({

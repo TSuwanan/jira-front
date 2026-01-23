@@ -8,6 +8,7 @@ import {
     FolderKanban,
     ClipboardList,
     UsersRound,
+    Rocket
 
 } from "lucide-react";
 import Header from "./Header";
@@ -36,6 +37,12 @@ interface LayoutProps {
 }
 
 const createDefaultNavigationItems = (): NavigationItem[] => [
+    {
+        id: "getting-started",
+        label: "Getting Started",
+        icon: Rocket,
+        route: "/",
+    },
     {
         id: "users",
         label: "Manage Users",
@@ -85,7 +92,7 @@ export default function Layout({
 
     // Filter items based on role_id
     const filteredNavigationItems = userRole === 2
-        ? defaultNavigationItems.filter(item => item.id === "manage-tasks")
+        ? defaultNavigationItems.filter(item => item.id === "manage-tasks" || item.id === "getting-started")
         : defaultNavigationItems;
 
     const finalNavigationItems = navigationItems || filteredNavigationItems;

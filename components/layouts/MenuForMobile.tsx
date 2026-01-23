@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { X, UsersRound, FolderKanban, ClipboardList, ChevronRight } from 'lucide-react';
+import { X, UsersRound, FolderKanban, ClipboardList, ChevronRight, Rocket } from 'lucide-react';
 import { getUser } from "@/lib/api";
 
 interface NavigationItem {
@@ -18,6 +18,12 @@ interface MenuForMobileProps {
 }
 
 const navigationItems: NavigationItem[] = [
+    {
+        id: "getting-started",
+        label: "Getting Started",
+        icon: Rocket,
+        route: "/",
+    },
     {
         id: "users",
         label: "Manage Users",
@@ -57,7 +63,7 @@ export default function MenuForMobile({ isOpen, onClose }: MenuForMobileProps) {
 
     // Filter items based on role_id
     const filteredNavigationItems = userRole === 2
-        ? navigationItems.filter(item => item.id === "manage-tasks")
+        ? navigationItems.filter(item => item.id === "manage-tasks" || item.id === "getting-started")
         : navigationItems;
 
     return (

@@ -4,7 +4,7 @@ import Layout from "@/components/layouts/Layout";
 import { Trash, ChevronLeft, ChevronRight, Edit, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { getProjects, Project, clearAuth, getToken } from "@/lib/api";
+import { getProjects, Project, clearAuth, getToken, getUser } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatDate } from "@/lib/format";
 
@@ -27,9 +27,11 @@ export default function ManageProjectsPage() {
             setLoading(true);
             setError(null);
             const token = getToken();
-            if (!token) {
-                clearAuth();
-                router.push("/login");
+            const user = getUser();
+
+            if (!token || !user || user.role_id !== 1) {
+                if (!token) clearAuth();
+                router.push(token ? "/" : "/login");
                 return;
             }
             const result = await getProjects(token, page, ITEMS_PER_PAGE, search);
@@ -60,6 +62,14 @@ export default function ManageProjectsPage() {
         fetchProjects(currentPage, debouncedSearch);
     }, [currentPage, debouncedSearch]);
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+        );
+    }
+
     return (
         <Layout children={
             <div className="space-y-8">
@@ -89,14 +99,7 @@ export default function ManageProjectsPage() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={6} className="p-8 text-center">
-                                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-                                            <p className="mt-2 text-sm text-gray-500">Loading projects...</p>
-                                        </td>
-                                    </tr>
-                                ) : error ? (
+                                {error ? (
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center">
                                             <p className="text-sm text-red-500">{error}</p>

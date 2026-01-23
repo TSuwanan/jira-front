@@ -70,6 +70,8 @@ export interface User {
   email: string;
   full_name: string;
   role_id: number;
+  position_code?: string | number;
+  level_code?: string | number;
   created_at: string;
 }
 
@@ -169,6 +171,24 @@ export async function getUsers(token: string, page: number = 1, limit: number = 
     limit: result.pagination?.limit || limit,
     totalPages: result.pagination?.totalPages || 1,
   };
+}
+
+// Get all members (non-paginated for selection lists)
+export async function getMembers(token: string): Promise<User[]> {
+  const response = await fetchWithAuth(`${API_URL}/api/users/members`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch members');
+  }
+
+  const result = await response.json();
+  return result.data || result.members || result || [];
 }
 
 // Role interface
@@ -351,6 +371,24 @@ export async function editProject(token: string, id: string, data: CreateProject
   return result.data || result.project || result;
 }
 
+// Get project members
+export async function getProjectMembers(token: string, projectId: string): Promise<User[]> {
+  const response = await fetchWithAuth(`${API_URL}/api/projects/${projectId}/members`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch project members');
+  }
+
+  const result = await response.json();
+  return result.data || result.members || result || [];
+}
+
 // Task interface
 export interface Task {
   id: string;
@@ -369,13 +407,16 @@ export interface Task {
 }
 
 // Get all tasks with pagination
-export async function getTasks(token: string, page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedResponse<Task>> {
+export async function getTasks(token: string, page: number = 1, limit: number = 10, search: string = '', status: string = ''): Promise<PaginatedResponse<Task>> {
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
   });
   if (search) {
     params.append('search', search);
+  }
+  if (status) {
+    params.append('status', status);
   }
   const response = await fetchWithAuth(`${API_URL}/api/tasks?${params.toString()}`, {
     method: 'GET',
@@ -398,4 +439,82 @@ export async function getTasks(token: string, page: number = 1, limit: number = 
     limit: result.pagination?.limit || limit,
     totalPages: result.pagination?.totalPages || 1,
   };
+}
+
+// Create task payload
+export interface CreateTaskData {
+  title: string;
+  description?: string;
+  status: string;
+  priority: string;
+  project_id: string;
+  assignee_id?: string;
+}
+
+// Add task
+export async function addTask(token: string, data: CreateTaskData): Promise<Task> {
+  const response = await fetchWithAuth(`${API_URL}/api/tasks`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || error.error || 'Failed to create task');
+    } catch {
+      throw new Error(text || 'Failed to create task');
+    }
+  }
+
+  const result = await response.json();
+  return result.data || result.task || result;
+}
+
+// Get single task by ID
+export async function getTask(token: string, id: string): Promise<Task> {
+  const response = await fetchWithAuth(`${API_URL}/api/tasks/${id}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch task');
+  }
+
+  const result = await response.json();
+  return result.data || result.task || result;
+}
+
+// Update task status
+export async function updateTaskStatus(token: string, taskId: string, status: string): Promise<Task> {
+  const response = await fetchWithAuth(`${API_URL}/api/tasks/${taskId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || error.error || 'Failed to update task status');
+    } catch {
+      throw new Error(text || 'Failed to update task status');
+    }
+  }
+
+  const result = await response.json();
+  return result.data || result.task || result;
 }

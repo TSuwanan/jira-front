@@ -4,7 +4,7 @@ import Layout from "@/components/layouts/Layout";
 import { Trash, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { getUsers, User, clearAuth, getToken } from "@/lib/api";
+import { getUsers, User, clearAuth, getToken, getUser } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 
 const ITEMS_PER_PAGE = 10;
@@ -26,9 +26,11 @@ export default function ManageUsersPage() {
             setLoading(true);
             setError(null);
             const token = getToken();
-            if (!token) {
-                clearAuth();
-                router.push("/login");
+            const user = getUser();
+
+            if (!token || !user || user.role_id !== 1) {
+                if (!token) clearAuth();
+                router.push(token ? "/" : "/login");
                 return;
             }
             const result = await getUsers(token, page, ITEMS_PER_PAGE, search);
@@ -61,6 +63,14 @@ export default function ManageUsersPage() {
         fetchUsers(currentPage, debouncedSearch);
     }, [currentPage, debouncedSearch]);
 
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+        );
+    }
+
     return (
         <Layout children={
             <div className="space-y-8">
@@ -88,14 +98,7 @@ export default function ManageUsersPage() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={5} className="p-8 text-center">
-                                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-                                            <p className="mt-2 text-sm text-gray-500">Loading users...</p>
-                                        </td>
-                                    </tr>
-                                ) : error ? (
+                                {error ? (
                                     <tr>
                                         <td colSpan={5} className="p-8 text-center">
                                             <p className="text-sm text-red-500">{error}</p>
@@ -174,8 +177,8 @@ export default function ManageUsersPage() {
                                         <button
                                             onClick={() => setCurrentPage(page)}
                                             className={`px-3 py-1.5 text-sm font-medium rounded-lg cursor-pointer ${currentPage === page
-                                                    ? 'bg-gray-900 text-white'
-                                                    : 'text-gray-600 hover:bg-gray-100 transition-colors'
+                                                ? 'bg-gray-900 text-white'
+                                                : 'text-gray-600 hover:bg-gray-100 transition-colors'
                                                 }`}
                                         >
                                             {page}

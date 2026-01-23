@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import positions from "@/constants/position";
 import levels from "@/constants/level";
-import { getRoles, Role, createUser, clearAuth, getToken } from "@/lib/api";
+import { getRoles, Role, createUser, clearAuth, getToken, getUser } from "@/lib/api";
 
 // Define Zod Schema
 const userSchema = z.object({
@@ -51,9 +51,11 @@ export default function ManageUsersPage() {
         const fetchRoles = async () => {
             try {
                 const token = getToken();
-                if (!token) {
-                    clearAuth();
-                    router.push("/login");
+                const user = getUser();
+
+                if (!token || !user || user.role_id !== 1) {
+                    if (!token) clearAuth();
+                    router.push(token ? "/" : "/login");
                     return;
                 }
                 const data = await getRoles(token);

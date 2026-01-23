@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createProject, clearAuth, getToken, getUsers, User } from "@/lib/api";
+import { createProject, clearAuth, getToken, getMembers, User, getUser } from "@/lib/api";
 
 // Define Zod Schema
 const projectSchema = z.object({
@@ -51,13 +51,15 @@ export default function AddProjectPage() {
         const fetchUsers = async () => {
             try {
                 const token = getToken();
-                if (!token) {
-                    clearAuth();
-                    router.push("/login");
+                const user = getUser();
+
+                if (!token || !user || user.role_id !== 1) {
+                    if (!token) clearAuth();
+                    router.push(token ? "/" : "/login");
                     return;
                 }
-                const result = await getUsers(token, 1, 100); // Get up to 100 users
-                setUsers(result.data);
+                const result = await getMembers(token);
+                setUsers(result);
             } catch (err) {
                 console.error("Failed to fetch users:", err);
             } finally {

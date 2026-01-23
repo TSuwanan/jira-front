@@ -4,10 +4,11 @@ import Layout from "@/components/layouts/Layout";
 import { Trash, ChevronLeft, ChevronRight, Loader2, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { getTasks, Task, clearAuth, getToken, getUser } from "@/lib/api";
+import { getTasks, Task, clearAuth, getToken, getUser, updateTaskStatus } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatDate } from "@/lib/format";
 import taskStatuses from "@/constants/task-status.js";
+import taskPriorities from "@/constants/task-priority.js";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -31,6 +32,26 @@ const getStatusStyle = (code: string | undefined) => {
     }
 };
 
+// Helper function to get priority name by code
+const getPriorityName = (code: string | undefined) => {
+    if (!code) return "N/A";
+    const priority = taskPriorities.find(p => p.code === code);
+    return priority?.name || code;
+};
+
+// Helper function to get priority style by code
+const getPriorityStyle = (code: string | undefined) => {
+    switch (code) {
+        case 'H': // High
+            return 'text-red-600 bg-red-50 border border-red-100';
+        case 'M': // Medium
+            return 'text-orange-600 bg-orange-50 border border-orange-100';
+        case 'L': // Low
+        default:
+            return 'text-blue-600 bg-blue-50 border border-blue-100';
+    }
+};
+
 export default function ManageTasksPage() {
     const router = useRouter();
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -42,9 +63,10 @@ export default function ManageTasksPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [userRole, setUserRole] = useState<number | null>(null);
+    const [statusFilter, setStatusFilter] = useState("");
     const prevSearchRef = useRef(debouncedSearch);
 
-    const fetchTasks = async (page: number = 1, search: string = "") => {
+    const fetchTasks = async (page: number = 1, search: string = "", status: string = "") => {
         try {
             setLoading(true);
             setError(null);
@@ -54,7 +76,7 @@ export default function ManageTasksPage() {
                 router.push("/login");
                 return;
             }
-            const result = await getTasks(token, page, ITEMS_PER_PAGE, search);
+            const result = await getTasks(token, page, ITEMS_PER_PAGE, search, status);
             setTasks(result.data);
             setCurrentPage(result.page);
             setTotalPages(result.totalPages);
@@ -71,15 +93,31 @@ export default function ManageTasksPage() {
         }
     };
 
-    // Fetch tasks when page or search changes
+    const handleSubmitTask = async (taskId: string) => {
+        try {
+            const token = getToken();
+            if (!token) return;
+
+            await updateTaskStatus(token, taskId, "D"); // Set to Done
+            // Refresh tasks
+            fetchTasks(currentPage, debouncedSearch, statusFilter);
+        } catch (err) {
+            console.error("Failed to submit task:", err);
+            alert("Failed to submit task");
+        }
+    };
+
+    // Set user role on mount
     useEffect(() => {
-        // Get user role
         const user = getUser();
         if (user) {
             setUserRole(user.role_id);
         }
+    }, []);
 
-        // If search changed, reset to page 1
+    // Fetch tasks when page, search, or status changes
+    useEffect(() => {
+        // If search or status changed, reset to page 1
         if (prevSearchRef.current !== debouncedSearch) {
             prevSearchRef.current = debouncedSearch;
             if (currentPage !== 1) {
@@ -87,8 +125,16 @@ export default function ManageTasksPage() {
                 return; // Will fetch when currentPage updates
             }
         }
-        fetchTasks(currentPage, debouncedSearch);
-    }, [currentPage, debouncedSearch]);
+        fetchTasks(currentPage, debouncedSearch, statusFilter);
+    }, [currentPage, debouncedSearch, statusFilter]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+        );
+    }
 
     return (
         <Layout children={
@@ -103,6 +149,19 @@ export default function ManageTasksPage() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className={`text-xs w-full sm:w-[40%] lg:w-[30%] px-4 py-2 bg-white/5 border rounded-lg placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50`}
                         />
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="text-xs px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-700/50 focus:border-gray-700/50"
+                        >
+                            <option value="">All Statuses</option>
+                            {taskStatuses.map(status => (
+                                <option key={status.id} value={status.code}>{status.name}</option>
+                            ))}
+                        </select>
 
                     </div>
                     <div className="flex items-center justify-end gap-2 w-full">
@@ -116,26 +175,20 @@ export default function ManageTasksPage() {
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="border-t border-b border-gray-200 p-3 w-[12%] text-left font-medium text-gray-500">Task ID</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[10%] text-left font-medium text-gray-500">Task ID</th>
                                     <th className="border-t border-b border-gray-200 p-3 w-[20%] text-left font-medium text-gray-500">Task Title</th>
                                     <th className="border-t border-b border-gray-200 p-3 w-[15%] text-left font-medium text-gray-500">Project</th>
-                                    <th className="border-t border-b border-gray-200 p-3 w-[12%] text-center font-medium text-gray-500">Status</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[10%] text-center font-medium text-gray-500">Priority</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[10%] text-center font-medium text-gray-500">Status</th>
                                     <th className="border-t border-b border-gray-200 p-3 w-[13%] text-left font-medium text-gray-500">Assignee</th>
                                     <th className="border-t border-b border-gray-200 p-3 w-[13%] text-center font-medium text-gray-500">Created At</th>
-                                    <th className="border-t border-b border-gray-200 p-3 w-[10%] text-center font-medium text-gray-500">Actions</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[15%] text-center font-medium text-gray-500">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {loading ? (
+                                {error ? (
                                     <tr>
-                                        <td colSpan={7} className="p-8 text-center">
-                                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-                                            <p className="mt-2 text-sm text-gray-500">Loading tasks...</p>
-                                        </td>
-                                    </tr>
-                                ) : error ? (
-                                    <tr>
-                                        <td colSpan={7} className="p-8 text-center">
+                                        <td colSpan={8} className="p-8 text-center">
                                             <p className="text-sm text-red-500">{error}</p>
                                             <button
                                                 onClick={() => fetchTasks(currentPage, debouncedSearch)}
@@ -147,7 +200,7 @@ export default function ManageTasksPage() {
                                     </tr>
                                 ) : tasks.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="p-8 text-center text-sm text-gray-500">
+                                        <td colSpan={8} className="p-8 text-center text-sm text-gray-500">
                                             No tasks found
                                         </td>
                                     </tr>
@@ -158,6 +211,11 @@ export default function ManageTasksPage() {
                                             <td className="p-3 text-gray-600">{task.title}</td>
                                             <td className="p-3 text-gray-600">{task.project_name || "N/A"}</td>
                                             <td className="p-3 text-center">
+                                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${getPriorityStyle(task.priority)}`}>
+                                                    {getPriorityName(task.priority)}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-center">
                                                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusStyle(task.status)}`}>
                                                     {getStatusName(task.status)}
                                                 </span>
@@ -167,16 +225,43 @@ export default function ManageTasksPage() {
                                                 {formatDate(task.created_at)}
                                             </td>
                                             <td className="p-3 text-center">
-                                                <button
-                                                    className="text-gray-600 p-2 hover:text-gray-900 transition-colors cursor-pointer"
-                                                    onClick={() => router.push(`/manage-tasks/edit/${task.id}`)}
-                                                >
-                                                    <Edit className="w-4 h-4 mx-auto" strokeWidth="2" />
-                                                </button>
-                                                {userRole !== 2 && (
-                                                    <button className="text-red-600 hover:text-red-800 transition-colors cursor-pointer">
-                                                        <Trash className="w-4 h-4 mx-auto" />
+                                                {task.status === 'D' ? (
+                                                    <button
+                                                        onClick={() => router.push(`/manage-tasks/complete/${task.id}`)}
+                                                        className="px-3 py-1 border border-gray-900 text-gray-900 hover:bg-gray-50 text-[10px] font-bold rounded-full transition-colors cursor-pointer"
+                                                    >
+                                                        View
                                                     </button>
+                                                ) : userRole === 2 ? (
+                                                    <button
+                                                        onClick={() => router.push(`/manage-tasks/complete/${task.id}`)}
+                                                        className="px-3 py-1 bg-gray-900 hover:bg-gray-800 text-[10px] font-bold text-white rounded-full transition-colors cursor-pointer"
+                                                    >
+                                                        Complete
+                                                    </button>
+                                                ) : (
+                                                    (() => {
+                                                        const isDisabled = task.status === 'I';
+                                                        return (
+                                                            <div className="flex justify-center gap-1">
+                                                                <button
+                                                                    disabled={isDisabled}
+                                                                    className={`p-2 transition-colors ${isDisabled ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 cursor-pointer'}`}
+                                                                    onClick={() => !isDisabled && router.push(`/manage-tasks/edit/${task.id}`)}
+                                                                    title={isDisabled ? "Cannot edit task in progress" : "Edit task"}
+                                                                >
+                                                                    <Edit className="w-4 h-4 mx-auto" strokeWidth="2" />
+                                                                </button>
+                                                                <button
+                                                                    disabled={isDisabled}
+                                                                    className={`p-2 transition-colors ${isDisabled ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-800 cursor-pointer'}`}
+                                                                    title={isDisabled ? "Cannot delete task in progress" : "Delete task"}
+                                                                >
+                                                                    <Trash className="w-4 h-4 mx-auto" />
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })()
                                                 )}
                                             </td>
                                         </tr>
