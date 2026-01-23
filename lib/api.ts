@@ -11,6 +11,17 @@ export function clearAuth() {
 export function getToken(): string | null {
   return localStorage.getItem('token');
 }
+// Get user from localStorage
+export function getUser(): User | null {
+  if (typeof window === 'undefined') return null;
+  const user = localStorage.getItem('user');
+  if (!user) return null;
+  try {
+    return JSON.parse(user);
+  } catch {
+    return null;
+  }
+}
 
 // Handle logout and redirect
 export function handleAuthError() {
@@ -338,4 +349,53 @@ export async function editProject(token: string, id: string, data: CreateProject
 
   const result = await response.json();
   return result.data || result.project || result;
+}
+
+// Task interface
+export interface Task {
+  id: string;
+  task_code: string;
+  title: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  project_id?: string;
+  project_name?: string;
+  assignee_id?: string;
+  assignee_name?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Get all tasks with pagination
+export async function getTasks(token: string, page: number = 1, limit: number = 10, search: string = ''): Promise<PaginatedResponse<Task>> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) {
+    params.append('search', search);
+  }
+  const response = await fetchWithAuth(`${API_URL}/api/tasks?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch tasks');
+  }
+
+  const result = await response.json();
+
+  return {
+    data: result.data || [],
+    total: result.pagination?.total || 0,
+    page: result.pagination?.page || page,
+    limit: result.pagination?.limit || limit,
+    totalPages: result.pagination?.totalPages || 1,
+  };
 }

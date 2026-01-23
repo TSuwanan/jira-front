@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import Header from "./Header";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
+import { getUser } from "@/lib/api";
 // import HeaderSetting from "./HeaderSetting";
 // import { useI18n } from "@/contexts/I18nContext";
 
@@ -70,10 +71,24 @@ export default function Layout({
     const pathname = usePathname();
     const [internalSelectedSection, setInternalSelectedSection] =
         useState(selectedSection);
+    const [userRole, setUserRole] = useState<number | null>(null);
+
+    useEffect(() => {
+        const user = getUser();
+        if (user && user.role_id) {
+            setUserRole(user.role_id);
+        }
+    }, []);
 
     // Create default navigation items with translations if none provided
     const defaultNavigationItems = createDefaultNavigationItems();
-    const finalNavigationItems = navigationItems || defaultNavigationItems;
+
+    // Filter items based on role_id
+    const filteredNavigationItems = userRole === 2
+        ? defaultNavigationItems.filter(item => item.id === "manage-tasks")
+        : defaultNavigationItems;
+
+    const finalNavigationItems = navigationItems || filteredNavigationItems;
 
     const handleSectionChange = (sectionId: string, route?: string) => {
         if (route) {

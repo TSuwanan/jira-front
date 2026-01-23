@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { X, UsersRound, FolderKanban, ClipboardList, ChevronRight } from 'lucide-react';
+import { getUser } from "@/lib/api";
 
 interface NavigationItem {
     id: string;
@@ -39,11 +41,24 @@ const navigationItems: NavigationItem[] = [
 export default function MenuForMobile({ isOpen, onClose }: MenuForMobileProps) {
     const router = useRouter();
     const pathname = usePathname();
+    const [userRole, setUserRole] = useState<number | null>(null);
+
+    useEffect(() => {
+        const user = getUser();
+        if (user && user.role_id) {
+            setUserRole(user.role_id);
+        }
+    }, [isOpen]);
 
     const handleNavigate = (route: string) => {
         router.push(route);
         onClose();
     };
+
+    // Filter items based on role_id
+    const filteredNavigationItems = userRole === 2
+        ? navigationItems.filter(item => item.id === "manage-tasks")
+        : navigationItems;
 
     return (
         <>
@@ -73,7 +88,7 @@ export default function MenuForMobile({ isOpen, onClose }: MenuForMobileProps) {
 
                 {/* Navigation Items */}
                 <nav className="p-4">
-                    {navigationItems.map((item) => {
+                    {filteredNavigationItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = pathname === item.route;
 
@@ -82,8 +97,8 @@ export default function MenuForMobile({ isOpen, onClose }: MenuForMobileProps) {
                                 key={item.id}
                                 onClick={() => handleNavigate(item.route)}
                                 className={`w-full flex items-center justify-between px-4 py-4 text-left rounded-lg transition-all duration-200 ease-in-out cursor-pointer mb-2 ${isActive
-                                        ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold"
-                                        : "text-gray-900 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white"
+                                    ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold"
+                                    : "text-gray-900 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white"
                                     }`}
                             >
                                 <div className="flex items-center">
