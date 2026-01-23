@@ -4,7 +4,7 @@ import Layout from "@/components/layouts/Layout";
 import { Trash, ChevronLeft, ChevronRight, Loader2, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { getTasks, Task, clearAuth, getToken, getUser, updateTaskStatus } from "@/lib/api";
+import { getTasks, Task, clearAuth, getToken, getUser, updateTaskStatus, deleteTask } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatDate } from "@/lib/format";
 import taskStatuses from "@/constants/task-status.js";
@@ -104,6 +104,22 @@ export default function ManageTasksPage() {
         } catch (err) {
             console.error("Failed to submit task:", err);
             alert("Failed to submit task");
+        }
+    };
+
+    const handleDeleteTask = async (taskId: string) => {
+        if (!confirm("Are you sure you want to delete this task?")) return;
+
+        try {
+            const token = getToken();
+            if (!token) return;
+
+            await deleteTask(token, taskId);
+            // Refresh tasks
+            fetchTasks(currentPage, debouncedSearch, statusFilter);
+        } catch (err) {
+            console.error("Failed to delete task:", err);
+            alert("Failed to delete task");
         }
     };
 
@@ -256,6 +272,7 @@ export default function ManageTasksPage() {
                                                                     disabled={isDisabled}
                                                                     className={`p-2 transition-colors ${isDisabled ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-800 cursor-pointer'}`}
                                                                     title={isDisabled ? "Cannot delete task in progress" : "Delete task"}
+                                                                    onClick={() => !isDisabled && handleDeleteTask(task.id)}
                                                                 >
                                                                     <Trash className="w-4 h-4 mx-auto" />
                                                                 </button>

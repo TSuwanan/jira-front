@@ -518,3 +518,23 @@ export async function updateTaskStatus(token: string, taskId: string, status: st
   const result = await response.json();
   return result.data || result.task || result;
 }
+// Delete task
+export async function deleteTask(token: string, id: string): Promise<void> {
+  const response = await fetchWithAuth(`${API_URL}/api/tasks/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || error.error || 'Failed to delete task');
+    } catch {
+      throw new Error(text || 'Failed to delete task');
+    }
+  }
+}
