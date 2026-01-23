@@ -219,11 +219,12 @@ export async function createUser(token: string, data: CreateUserData): Promise<U
 export interface Project {
   id: string | number;
   project_code: string;
-  project_name: string;
+  name: string;
   created_by?: string | number;
   created_at?: string;
   updated_at?: string;
-  creator_name?: string;
+  owner_name?: string;
+  task_count?: number;
 }
 
 // Get all projects with pagination
@@ -256,4 +257,85 @@ export async function getProjects(token: string, page: number = 1, limit: number
     limit: result.pagination?.limit || limit,
     totalPages: result.pagination?.totalPages || 1,
   };
+}
+
+// Create/Update project payload
+export interface CreateProjectData {
+  name: string;
+  description?: string;
+  member_ids: string[];
+}
+
+// Project detail interface (includes members)
+export interface ProjectDetail extends Project {
+  description?: string;
+  members?: User[];
+}
+
+// Get single project by ID
+export async function getProject(token: string, id: string): Promise<ProjectDetail> {
+  const response = await fetchWithAuth(`${API_URL}/api/projects/${id}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch project');
+  }
+
+  const result = await response.json();
+  return result.data || result.project || result;
+}
+
+// Create project
+export async function createProject(token: string, data: CreateProjectData): Promise<Project> {
+  const response = await fetchWithAuth(`${API_URL}/api/projects`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || error.error || 'Failed to create project');
+    } catch {
+      throw new Error(text || 'Failed to create project');
+    }
+  }
+
+  const result = await response.json();
+  return result.data || result.project || result;
+}
+
+// Edit project
+export async function editProject(token: string, id: string, data: CreateProjectData): Promise<Project> {
+  const response = await fetchWithAuth(`${API_URL}/api/projects/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || error.error || 'Failed to edit project');
+    } catch {
+      throw new Error(text || 'Failed to edit project');
+    }
+  }
+
+  const result = await response.json();
+  return result.data || result.project || result;
 }
