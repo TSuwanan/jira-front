@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { getUsers, User, clearAuth, getToken, getUser } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import positions from "@/constants/position";
+import levels from "@/constants/level";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -125,7 +126,13 @@ export default function ManageUsersPage() {
                                             <td className="p-3 text-gray-600">{user.full_name}</td>
                                             <td className="p-3 text-gray-600">{user.email}</td>
                                             <td className="p-3 text-gray-600">
-                                                {positions.find(p => p.code === user.position_code || p.id === String(user.position_code))?.name || user.position_code || '-'}
+                                                {(() => {
+                                                    const position = positions.find(p => p.code === user.position_code || p.id === String(user.position_code))?.name;
+                                                    const level = levels.find(l => l.code === user.level_code || l.id === String(user.level_code))?.name;
+                                                    if (position && level) return `${position} (${level})`;
+                                                    if (position) return position;
+                                                    return user.position_code || '-';
+                                                })()}
                                             </td>
                                             <td className="p-3 text-center">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role_id === 1
