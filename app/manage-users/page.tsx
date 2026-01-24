@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { getUsers, User, clearAuth, getToken, getUser } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
+import positions from "@/constants/position";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -90,9 +91,10 @@ export default function ManageUsersPage() {
                         <table className="w-full text-sm">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="border-t border-b border-gray-200 p-3 w-[15%] text-left font-medium text-gray-500">Employee ID</th>
-                                    <th className="border-t border-b border-gray-200 p-3 w-[30%] text-left font-medium text-gray-500">Employee Name</th>
-                                    <th className="border-t border-b border-gray-200 p-3 w-[30%] text-left font-medium text-gray-500">Email</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[12%] text-left font-medium text-gray-500">Employee ID</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[20%] text-left font-medium text-gray-500">Employee Name</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[23%] text-left font-medium text-gray-500">Email</th>
+                                    <th className="border-t border-b border-gray-200 p-3 w-[20%] text-left font-medium text-gray-500">Position</th>
                                     <th className="border-t border-b border-gray-200 p-3 w-[10%] text-center font-medium text-gray-500">Role</th>
                                     <th className="border-t border-b border-gray-200 p-3 w-[15%] text-center font-medium text-gray-500">Actions</th>
                                 </tr>
@@ -100,7 +102,7 @@ export default function ManageUsersPage() {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {error ? (
                                     <tr>
-                                        <td colSpan={5} className="p-8 text-center">
+                                        <td colSpan={6} className="p-8 text-center">
                                             <p className="text-sm text-red-500">{error}</p>
                                             <button
                                                 onClick={() => fetchUsers(currentPage, debouncedSearch)}
@@ -112,7 +114,7 @@ export default function ManageUsersPage() {
                                     </tr>
                                 ) : users.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="p-8 text-center text-sm text-gray-500">
+                                        <td colSpan={6} className="p-8 text-center text-sm text-gray-500">
                                             No users found
                                         </td>
                                     </tr>
@@ -122,6 +124,9 @@ export default function ManageUsersPage() {
                                             <td className="p-3 text-gray-900 font-medium">{user.user_code}</td>
                                             <td className="p-3 text-gray-600">{user.full_name}</td>
                                             <td className="p-3 text-gray-600">{user.email}</td>
+                                            <td className="p-3 text-gray-600">
+                                                {positions.find(p => p.code === user.position_code || p.id === String(user.position_code))?.name || user.position_code || '-'}
+                                            </td>
                                             <td className="p-3 text-center">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role_id === 1
                                                     ? 'bg-blue-100 text-blue-700'
