@@ -424,6 +424,7 @@ export interface Task {
   assignee_name?: string;
   created_by?: string;
   submission_comment?: string;
+  comments?: any;
   created_at?: string;
   updated_at?: string;
 }
@@ -519,7 +520,7 @@ export async function getTask(token: string, id: string): Promise<Task> {
 // Update task status
 export async function updateTaskStatus(token: string, taskId: string, status: string, comment?: string): Promise<Task> {
   const response = await fetchWithAuth(`${API_URL}/api/tasks/${taskId}/status`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',

@@ -140,15 +140,17 @@ export default function HomePage() {
         </div>
 
         {/* Minimal Action */}
-        <div className="pt-8">
-          <button
-            onClick={() => router.push('/manage-tasks')}
-            className="group flex items-center gap-3 text-sm font-medium text-gray-900 hover:text-gray-500 transition-colors"
-          >
-            <span>View your tasks</span>
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </button>
-        </div>
+        {user.role_id !== 1 && (
+          <div className="pt-8">
+            <button
+              onClick={() => router.push('/manage-tasks')}
+              className="group flex items-center gap-3 text-sm font-medium text-gray-900 hover:text-gray-500 transition-colors"
+            >
+              <span>View your tasks</span>
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </button>
+          </div>
+        )}
 
       </div>
     </Layout>

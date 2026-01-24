@@ -101,7 +101,7 @@ export default function CompleteTaskPage() {
 
     return (
         <Layout>
-            <div className="w-full lg:w-2xl px-4 pb-10 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="w-full lg:w-2xl px-4 pb-14 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* Header */}
                 <header className="space-y-8 border-b border-gray-100 pb-4">
                     <div className="flex items-center justify-between">
@@ -198,16 +198,22 @@ export default function CompleteTaskPage() {
                         </>
                     ) : (
                         <div className="w-full space-y-4">
-                            <label className="text-[10px] font-bold uppercase tracking-widest">Submission Comment <span className="text-red-600">*</span></label>
-                            <textarea
-                                {...register("comment")}
-                                placeholder="Add a comment about your work..."
-                                value={task.submission_comment}
-                                disabled
-                                rows={4}
-                                className={`text-xs w-full px-4 py-2 bg-white/5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-1 transition-all duration-300 ${errors.comment ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-300 focus:ring-gray-700/50 focus:border-gray-700/50'}`}
-                            />
-                            {errors.comment && <p className="text-[10px] text-red-500 font-medium tracking-wider uppercase">{errors.comment.message}</p>}
+                            <label className="text-[10px] font-bold uppercase tracking-widest">Comment</label>
+                            <div>
+                                <p className="text-xs w-full px-4 py-8 bg-gray-50 border border-gray-50 rounded-xl placeholder-slate-400 focus:outline-none transition-all duration-300">{task.comments?.content}</p>
+                            </div>
+                            <div className="flex flex-col gap-0">
+                                <div>
+                                    <span className="text-[10px] text-gray-500 font-medium tracking-wider uppercase"> Commented by: </span>
+                                    <span className="text-[10px] text-gray-500 font-medium tracking-wider uppercase">{task.comments?.user_name}</span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] text-gray-500 font-medium tracking-wider uppercase"> Commented on: </span>
+                                    <span className="text-[10px] text-gray-500 font-medium tracking-wider uppercase">{formatDate(task.comments?.created_at)}</span>
+                                </div>
+                            </div>
+
+
                         </div>
                     )}
                 </form>
